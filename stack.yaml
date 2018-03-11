@@ -1,0 +1,7 @@
+resolver: lts-9.18
+packages:
+- '.'
+extra-deps: []
+
+extra-package-dbs: []
+
