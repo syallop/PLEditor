@@ -1,13 +1,23 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-|
+Module      : PLEditor.Line
+Copyright   : (c) Samuel A. Yallop, 2018
+Maintainer  : syallop@gmail.com
+Stability   : experimental
+
+A Line is a single line of Text which may be appended and taken from.
+-}
 module PLEditor.Line
   ( Line ()
   , textLine
+  , lineText
   , reverseLine
   , emptyLine
   , appendLine
   , lineLength
   , firstCharacter
   , prefixWithCharacter
+  , takeFromLine
   )
   where
 
@@ -15,7 +25,11 @@ import Data.Text
 import Data.Monoid
 import qualified Data.Text as Text
 
--- TODO: Encode directional flow of text in type for safe appends, etc.
+{- TODO:
+ - Decide whether Lines should be forbidden from containing newline characters.
+ - Encode directional flow of text for type-safe appends and potential
+   optimisations between the interaction of reverse and appends.
+-}
 
 -- | A Line of Text.
 newtype Line = Line Text
@@ -28,6 +42,11 @@ textLine
   :: Text
   -> Line
 textLine = Line
+
+lineText
+  :: Line
+  -> Text
+lineText (Line txt) = txt
 
 -- | Reverse the text within a line.
 reverseLine
@@ -70,4 +89,11 @@ prefixWithCharacter
   -> Line
   -> Line
 prefixWithCharacter c (Line txt) = Line (Text.cons c txt)
+
+-- | Take a number of characters from a line.
+takeFromLine
+  :: Int
+  -> Line
+  -> Line
+takeFromLine n (Line txt) = Line $ Text.take n txt
 

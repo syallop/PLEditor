@@ -1,4 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-|
+Module      : PLEditor.CurrentLine
+Copyright   : (c) Samuel A. Yallop, 2018
+Maintainer  : syallop@gmail.com
+Stability   : experimental
+
+A CurrentLine encodes a Line with a cursor position at which characters can be
+inserted or deleted.
+Functions are provided which 'try' to move the cursor left and right. 'try' in
+that if movement in that direction is impossible, no movement will be performed.
+This might be a good default for a text editor. If this needs to be detected,
+the resulting CurrentLine would need to be tested for equality. This decision
+may be reversed.
+-}
 module PLEditor.CurrentLine
   ( CurrentLine ()
   , emptyCurrentLine
@@ -27,14 +41,14 @@ emptyCurrentLine
   :: CurrentLine
 emptyCurrentLine = CurrentLine (textLine "",textLine "")
 
--- A current line starts at the first character.
+-- | A current line starts at the first character.
 startCurrentLine
   :: Line
   -> CurrentLine
 startCurrentLine line = CurrentLine (textLine "",line)
 
 
--- Complete a current line by merging it into a single line, returning where the
+-- | Complete a current line by merging it into a single line, returning where the
 -- cursor was.
 completeCurrentLine
   :: CurrentLine
@@ -44,7 +58,7 @@ completeCurrentLine currentLine =
     CurrentLine (linePrefix, lineSuffix)
       -> (reverseLine linePrefix <> lineSuffix, lineLength linePrefix)
 
--- Move a cursor left if possible.
+-- | Move a cursor left if possible.
 tryMoveCursorLeft
   :: CurrentLine
   -> CurrentLine
@@ -58,6 +72,7 @@ tryMoveCursorLeft currentLine =
            Just (c, remainingPrefixes)
              -> CurrentLine (remainingPrefixes, prefixWithCharacter c suffixes)
 
+-- | Move a cursor right if possible.
 tryMoveCursorRight
   :: CurrentLine
   -> CurrentLine
@@ -71,6 +86,7 @@ tryMoveCursorRight currentLine =
            Just (c, remainingSuffixes)
              -> CurrentLine (prefixWithCharacter c prefixes, remainingSuffixes)
 
+-- | Insert a character at the cursor position.
 insertAtCursor
   :: Char
   -> CurrentLine
