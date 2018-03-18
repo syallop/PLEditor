@@ -1,4 +1,8 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE
+    OverloadedStrings
+  , DataKinds
+  , TypeFamilies
+  #-}
 {-|
 Module      : PLEditor.Line
 Copyright   : (c) Samuel A. Yallop, 2018
@@ -16,8 +20,13 @@ module PLEditor.Line
   , appendLine
   , lineLength
   , firstCharacter
+  , lastCharacter
   , prefixWithCharacter
+  , postfixWithCharacter
   , takeFromLine
+
+  , HDir (..)
+  , ReverseH
   )
   where
 
@@ -31,51 +40,59 @@ import qualified Data.Text as Text
    optimisations between the interaction of reverse and appends.
 -}
 
--- | A Line of Text.
-newtype Line = Line Text
+data HDir
+  = LeftToRight
+  | RightToLeft
 
-instance Monoid Line where
+type family ReverseH h where
+  ReverseH LeftToRight = RightToLeft
+  ReverseH RightToLeft = LeftToRight
+
+-- | A Line of Text.
+newtype Line (hDir :: HDir) = Line Text
+
+instance Monoid (Line hDir) where
   mempty = Line ""
   mappend (Line l0) (Line l1) = Line (l0 <> l1)
 
 textLine
   :: Text
-  -> Line
+  -> Line 'LeftToRight
 textLine = Line
 
 lineText
-  :: Line
+  :: Line 'LeftToRight
   -> Text
 lineText (Line txt) = txt
 
 -- | Reverse the text within a line.
 reverseLine
-  :: Line
-  -> Line
+  :: Line hDir
+  -> Line (ReverseH hDir)
 reverseLine (Line txt) = Line (Text.reverse txt)
 
 -- | An empty line with no text.
 emptyLine
-  :: Line
+  :: Line hDir
 emptyLine = Line ""
 
 -- | Append two lines.
 appendLine
-  :: Line
-  -> Line
-  -> Line
+  :: Line hDir
+  -> Line hDir
+  -> Line hDir
 appendLine lineL lineR = lineL <> lineR
 
 -- | A lines length is zero or greater.
 lineLength
-  :: Line
+  :: Line hDir
   -> Int
 lineLength (Line txt) = Text.length txt
 
 -- | The first character of a line may or may not exist.
 firstCharacter
-  :: Line
-  -> Maybe (Char, Line)
+  :: Line 'LeftToRight
+  -> Maybe (Char, Line 'LeftToRight)
 firstCharacter (Line txt) = case Text.uncons txt of
   Nothing
     -> Nothing
@@ -83,17 +100,36 @@ firstCharacter (Line txt) = case Text.uncons txt of
   Just (c,txt')
     -> Just (c, Line txt')
 
+-- | The last character of a line may or may not exist.
+lastCharacter
+  :: Line 'RightToLeft
+  -> Maybe (Char, Line 'RightToLeft)
+lastCharacter (Line txt) = case Text.uncons txt of
+  Nothing
+    -> Nothing
+
+  Just (c,txt')
+    -> Just (c, Line txt')
+
+
 -- | Insert a character infront of a line.
 prefixWithCharacter
   :: Char
-  -> Line
-  -> Line
+  -> Line 'LeftToRight
+  -> Line 'LeftToRight
 prefixWithCharacter c (Line txt) = Line (Text.cons c txt)
+
+-- | Insert a character at the end of a line.
+postfixWithCharacter
+  :: Char
+  -> Line 'RightToLeft
+  -> Line 'RightToLeft
+postfixWithCharacter c (Line txt) = Line (Text.cons c txt)
 
 -- | Take a number of characters from a line.
 takeFromLine
   :: Int
-  -> Line
-  -> Line
+  -> Line 'LeftToRight
+  -> Line 'LeftToRight
 takeFromLine n (Line txt) = Line $ Text.take n txt
 

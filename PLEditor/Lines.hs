@@ -16,6 +16,7 @@ module PLEditor.Lines
   , emptyLines
   , singletonLines
   , firstLine
+  , lastLine
   , prependLine
   , postpendLine
   , reverseLines
@@ -41,56 +42,66 @@ type family ReverseV v where
   ReverseV TopToBottom = BottomToTop
   ReverseV BottomToTop = TopToBottom
 
-data Lines (vDir :: VDir) = Lines [Line]
+data Lines (vDir :: VDir) (hDir :: HDir) = Lines [Line hDir]
 
-instance Monoid (Lines vDir) where
+instance Monoid (Lines vDir hDir) where
   mempty = Lines []
   mappend (Lines lL) (Lines lR) = Lines (lL <> lR)
 
 emptyLines
-  :: Lines vDir
+  :: Lines vDir hDir
 emptyLines = Lines []
 
 -- | One Line can be many lines.
 singletonLines
-  :: Line
-  -> Lines vDir
+  :: Line hDir
+  -> Lines vDir hDir
 singletonLines l = Lines [l]
 
 -- | Extract the first line if there is one.
 firstLine
-  :: Lines vDir
-  -> Maybe (Line, Lines vDir)
+  :: Lines 'TopToBottom hDir
+  -> Maybe (Line hDir, Lines 'TopToBottom hDir)
 firstLine lines = case lines of
   Lines (l:ls)
     -> Just (l, Lines ls)
   _ -> Nothing
 
+-- | Extract the last line if there is one.
+lastLine
+  :: Lines 'BottomToTop hDir
+  -> Maybe (Line hDir, Lines 'BottomToTop hDir)
+lastLine lines = case lines of
+  Lines (l:ls)
+    -> Just (l, Lines ls)
+  _ -> Nothing
+
+
 -- | Add a line to the front on lines.
 prependLine
-  :: Line
-  -> Lines 'TopToBottom
-  -> Lines 'TopToBottom
+  :: Line hDir
+  -> Lines 'TopToBottom hDir
+  -> Lines 'TopToBottom hDir
 prependLine l (Lines ls) = Lines (l:ls)
 
 -- | Add a line to the end of lines.
 postpendLine
-  :: Line
-  -> Lines 'BottomToTop
-  -> Lines 'BottomToTop
+  :: Line hDir
+  -> Lines 'BottomToTop hDir
+  -> Lines 'BottomToTop hDir
 postpendLine l (Lines ls) = Lines (l:ls)
 
 -- | Reverse the order of lines.
 reverseLines
-  :: Lines vDir
-  -> Lines (ReverseV vDir)
+  :: Lines vDir hDir
+  -> Lines (ReverseV vDir) hDir
 reverseLines (Lines ls) = Lines . reverse $ ls
 
 -- | Take at most a number of lines returning the number NOT taken.
 takeLines
   :: Int
-  -> Lines vDir
-  -> (Lines vDir,Int)
+  -> Lines vDir hDir
+  -> (Lines vDir hDir,Int)
 takeLines n (Lines ls) =
   let (linesTaken, remaining) = takeLines n ls
    in (Lines linesTaken, remaining)
@@ -102,13 +113,13 @@ takeLines n (Lines ls) =
 
 -- | Map a function across each line.
 mapLines
-  :: (Line -> Line)
-  -> Lines vDir
-  -> Lines vDir
+  :: (Line hDir -> Line hDir')
+  -> Lines vDir hDir
+  -> Lines vDir hDir'
 mapLines lineF (Lines ls) = Lines . map lineF $ ls
 
 renderLines
-  :: Lines TopToBottom
-  -> [Line]
+  :: Lines TopToBottom hDir
+  -> [Line hDir]
 renderLines (Lines ls) = ls
 

@@ -60,14 +60,14 @@ import PLEditor.View
 -- | An Editor is a collection of lines with a current cursor position which
 -- can be (semi-)efficiently traversed and characters inserted and deleted.
 data Editor = Editor
-  { _priorLines  :: Lines 'BottomToTop -- Previous lines ordered bottom-to-top.
-  , _currentLine :: CurrentLine        -- Current line with cursor.
-  , _afterLines  :: Lines 'TopToBottom -- Lines after the current line ordered top-to-bottom.
+  { _priorLines  :: Lines 'BottomToTop 'LeftToRight -- Previous lines ordered bottom-to-top.
+  , _currentLine :: CurrentLine                     -- Current line with cursor.
+  , _afterLines  :: Lines 'TopToBottom 'LeftToRight -- Lines after the current line ordered top-to-bottom.
   }
 
 -- | Create an Editor from a collection of Lines.
 makeEditor
-  :: Lines 'TopToBottom
+  :: Lines 'TopToBottom 'LeftToRight
   -> Editor
 makeEditor ls =
   let (currentLine, afterLines) = case firstLine ls of
@@ -85,7 +85,7 @@ makeEditor ls =
 -- left-to-right.
 editorLines
   :: Editor
-  -> Lines 'TopToBottom
+  -> Lines 'TopToBottom 'LeftToRight
 editorLines editor = case editor of
   Editor priorLines currentLine afterLines
     -> let (completedCurrentLine, cursorColumn) = completeCurrentLine currentLine
@@ -96,9 +96,9 @@ editorLines editor = case editor of
 viewEditor
   :: View
   -> Editor
-  -> Lines 'TopToBottom
+  -> Lines 'TopToBottom 'LeftToRight
 viewEditor (ViewPattern w h) (Editor priorLines currentLine afterLines) =
-  let (completedCurrentLine, cursorColumn) = first (takeFromLine w) $ completeCurrentLine currentLine
+  let (cursorLine, _cursorPos) = first (takeFromLine w) $ cursorCurrentLine currentLine
 
       -- Current line takes up a row.
       remainingAfterHeight = h - 1
@@ -110,7 +110,7 @@ viewEditor (ViewPattern w h) (Editor priorLines currentLine afterLines) =
       (remainingPriorLines,remainingHeight) = takeLines remainingPriorHeight priorLines
    in mconcat
         [ reverseLines $ mapLines (takeFromLine w) remainingPriorLines
-        , singletonLines completedCurrentLine
+        , singletonLines cursorLine
         , mapLines (takeFromLine w) remainingAfterLines
         ]
 
@@ -156,7 +156,7 @@ tryMoveUp
   -> Editor
 tryMoveUp editor = case editor of
   Editor priorLines currentLine afterLines
-    -> case firstLine priorLines of
+    -> case lastLine priorLines of
          Nothing
            -> editor
 

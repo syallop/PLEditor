@@ -1,4 +1,7 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE
+    OverloadedStrings
+  , DataKinds
+#-}
 {-|
 Module      : PLEditor.CurrentLine
 Copyright   : (c) Samuel A. Yallop, 2018
@@ -18,6 +21,7 @@ module PLEditor.CurrentLine
   , emptyCurrentLine
   , startCurrentLine
   , completeCurrentLine
+  , cursorCurrentLine
   , tryMoveCursorLeft
   , tryMoveCursorRight
   , insertAtCursor
@@ -31,32 +35,47 @@ import PLEditor.Line
 
 -- | A current line is a line with a cursor positon.
 newtype CurrentLine = CurrentLine
-  { _unCurrentLine :: ( Line -- First half of line ordered right-to-left. The cursor is considered on the first character.
-                      , Line -- Second half of line ordered left-to-right.
+  { _unCurrentLine :: ( Line 'RightToLeft -- First half of line ordered right-to-left. The cursor is considered on the first character.
+                      , Line 'LeftToRight -- Second half of line ordered left-to-right.
                       )
   }
 
 -- | No text in the current line.
 emptyCurrentLine
   :: CurrentLine
-emptyCurrentLine = CurrentLine (textLine "",textLine "")
+emptyCurrentLine = CurrentLine (reverseLine . textLine $ "",textLine "")
 
 -- | A current line starts at the first character.
 startCurrentLine
-  :: Line
+  :: Line 'LeftToRight
   -> CurrentLine
-startCurrentLine line = CurrentLine (textLine "",line)
+startCurrentLine line = CurrentLine (reverseLine . textLine $ "",line)
 
 
 -- | Complete a current line by merging it into a single line, returning where the
 -- cursor was.
 completeCurrentLine
   :: CurrentLine
-  -> (Line, Int)
+  -> (Line 'LeftToRight, Int)
 completeCurrentLine currentLine =
   case currentLine of
     CurrentLine (linePrefix, lineSuffix)
       -> (reverseLine linePrefix <> lineSuffix, lineLength linePrefix)
+
+-- | Complete a current line adding a cursor character at the appropriate place,
+-- returning where the cursor is.
+cursorCurrentLine
+  :: CurrentLine
+  -> (Line 'LeftToRight, Int)
+cursorCurrentLine currentLine =
+  case currentLine of
+    CurrentLine (linePrefix, lineSuffix)
+      -> case lastCharacter linePrefix of
+           Nothing
+             -> (emptyLine <> lineSuffix, lineLength linePrefix)
+
+           Just (c,remainingPrefix)
+             -> (reverseLine remainingPrefix <> textLine "_" <> lineSuffix, lineLength linePrefix)
 
 -- | Move a cursor left if possible.
 tryMoveCursorLeft
@@ -65,7 +84,7 @@ tryMoveCursorLeft
 tryMoveCursorLeft currentLine =
   case currentLine of
     CurrentLine (prefixes, suffixes)
-      -> case firstCharacter prefixes of
+      -> case lastCharacter prefixes of
            Nothing
              -> currentLine
 
@@ -84,7 +103,7 @@ tryMoveCursorRight currentLine =
              -> currentLine
 
            Just (c, remainingSuffixes)
-             -> CurrentLine (prefixWithCharacter c prefixes, remainingSuffixes)
+             -> CurrentLine (postfixWithCharacter c prefixes, remainingSuffixes)
 
 -- | Insert a character at the cursor position.
 insertAtCursor
@@ -94,7 +113,7 @@ insertAtCursor
 insertAtCursor c currentLine =
   case currentLine of
     CurrentLine (prefixLine, suffixLine)
-      -> CurrentLine (prefixWithCharacter c prefixLine, suffixLine)
+      -> CurrentLine (postfixWithCharacter c prefixLine, suffixLine)
 
 -- Delete the character at the cursor.
 --
@@ -110,7 +129,7 @@ deleteAtCursor
 deleteAtCursor currentLine =
   case currentLine of
     CurrentLine (prefixLine, suffixLine)
-      -> case firstCharacter prefixLine of
+      -> case lastCharacter prefixLine of
            Nothing
              -> (currentLine, Nothing)
 
