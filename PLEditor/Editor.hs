@@ -20,6 +20,7 @@ module PLEditor.Editor
   , tryMoveUp
   , insertCharacter
   , deleteCharacter
+  , newline
   )
   where
 
@@ -182,4 +183,15 @@ deleteCharacter editor = case editor of
     -> case deleteAtCursor currentLine of
          (newCurrentLine, mDeletedCharacter)
            -> (Editor priorLine newCurrentLine afterLines, mDeletedCharacter)
+
+-- | Insert a new empty line below.
+newline
+  :: Editor
+  -> Editor
+newline editor = case editor of
+  Editor priorLines currentLine afterLines
+    -> let (completedCurrentLine, cursorColumn) = completeCurrentLine currentLine
+           newCurrentLine = emptyCurrentLine
+           newPriorLines = prependLine completedCurrentLine priorLines
+        in Editor newPriorLines newCurrentLine afterLines
 
