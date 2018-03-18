@@ -1,4 +1,7 @@
-{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE
+    PatternSynonyms
+  , DataKinds
+#-}
 {-|
 Module      : PLEditor.Editor
 Copyright   : (c) Samuel A. Yallop, 2018
@@ -57,14 +60,14 @@ import PLEditor.View
 -- | An Editor is a collection of lines with a current cursor position which
 -- can be (semi-)efficiently traversed and characters inserted and deleted.
 data Editor = Editor
-  { _priorLines  :: Lines       -- Previous lines ordered bottom-to-top.
-  , _currentLine :: CurrentLine -- Current line with cursor.
-  , _afterLines  :: Lines       -- Lines after the current line ordered top-to-bottom.
+  { _priorLines  :: Lines 'BottomToTop -- Previous lines ordered bottom-to-top.
+  , _currentLine :: CurrentLine        -- Current line with cursor.
+  , _afterLines  :: Lines 'TopToBottom -- Lines after the current line ordered top-to-bottom.
   }
 
 -- | Create an Editor from a collection of Lines.
 makeEditor
-  :: Lines
+  :: Lines 'TopToBottom
   -> Editor
 makeEditor ls =
   let (currentLine, afterLines) = case firstLine ls of
@@ -82,7 +85,7 @@ makeEditor ls =
 -- left-to-right.
 editorLines
   :: Editor
-  -> Lines
+  -> Lines 'TopToBottom
 editorLines editor = case editor of
   Editor priorLines currentLine afterLines
     -> let (completedCurrentLine, cursorColumn) = completeCurrentLine currentLine
@@ -93,7 +96,7 @@ editorLines editor = case editor of
 viewEditor
   :: View
   -> Editor
-  -> Lines
+  -> Lines 'TopToBottom
 viewEditor (ViewPattern w h) (Editor priorLines currentLine afterLines) =
   let (completedCurrentLine, cursorColumn) = first (takeFromLine w) $ completeCurrentLine currentLine
 
@@ -106,7 +109,7 @@ viewEditor (ViewPattern w h) (Editor priorLines currentLine afterLines) =
       -- Take as many lines remaining as possible from the prior lines.
       (remainingPriorLines,remainingHeight) = takeLines remainingPriorHeight priorLines
    in mconcat
-        [ mapLines (takeFromLine w) remainingPriorLines
+        [ reverseLines $ mapLines (takeFromLine w) remainingPriorLines
         , singletonLines completedCurrentLine
         , mapLines (takeFromLine w) remainingAfterLines
         ]
@@ -142,7 +145,7 @@ tryMoveDown editor = case editor of
          Just (nextLine, remainingAfters)
            -> let (completedCurrentLine, cursorColumn) = completeCurrentLine currentLine
                   newCurrentLine = startCurrentLine nextLine
-                  newPriorLines = prependLine completedCurrentLine priorLines
+                  newPriorLines = postpendLine completedCurrentLine priorLines
                in Editor newPriorLines newCurrentLine remainingAfters
 
 -- | If it is possible to move up, do so. If not, silently dont.
@@ -192,6 +195,6 @@ newline editor = case editor of
   Editor priorLines currentLine afterLines
     -> let (completedCurrentLine, cursorColumn) = completeCurrentLine currentLine
            newCurrentLine = emptyCurrentLine
-           newPriorLines = prependLine completedCurrentLine priorLines
+           newPriorLines = postpendLine completedCurrentLine priorLines
         in Editor newPriorLines newCurrentLine afterLines
 
