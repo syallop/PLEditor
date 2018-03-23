@@ -23,6 +23,7 @@ module PLEditor.Lines
   , takeLines
   , mapLines
   , renderLines
+  , lineCount
 
   , VDir (..)
   , ReverseV
@@ -122,4 +123,10 @@ renderLines
   :: Lines TopToBottom hDir
   -> [Line hDir]
 renderLines (Lines ls) = ls
+
+-- | A positive count of the number of lines.
+lineCount
+  :: Lines vDir hDir
+  -> Int
+lineCount (Lines ls) = length ls
 

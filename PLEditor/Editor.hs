@@ -93,12 +93,13 @@ editorLines editor = case editor of
 
 -- | Convert an Editor to a collection of its lines top-to-bottom and
 -- left-to-right where lines fall within a given view.
+-- Also note the position of the cursor relative to the top left (x,y).
 viewEditor
   :: View
   -> Editor
-  -> Lines 'TopToBottom 'LeftToRight
+  -> (Lines 'TopToBottom 'LeftToRight, (Int,Int))
 viewEditor (ViewPattern w h) (Editor priorLines currentLine afterLines) =
-  let (cursorLine, _cursorPos) = first (takeFromLine w) $ cursorCurrentLine currentLine
+  let (cursorLine, cursorPosX) = first (takeFromLine w) $ completeCurrentLine currentLine
 
       -- Current line takes up a row.
       remainingAfterHeight = h - 1
@@ -108,11 +109,14 @@ viewEditor (ViewPattern w h) (Editor priorLines currentLine afterLines) =
 
       -- Take as many lines remaining as possible from the prior lines.
       (remainingPriorLines,remainingHeight) = takeLines remainingPriorHeight priorLines
-   in mconcat
+      lines = mconcat
         [ reverseLines $ mapLines (takeFromLine w) remainingPriorLines
         , singletonLines cursorLine
         , mapLines (takeFromLine w) remainingAfterLines
         ]
+      cursorPosY = if remainingPriorHeight == 0 then 0 else remainingHeight
+      cursorPos = (cursorPosX, lineCount remainingPriorLines)
+   in (lines, cursorPos)
 
 -- | If it is possible to move left, do so. If not, silently don't.
 tryMoveLeft
