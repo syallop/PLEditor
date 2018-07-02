@@ -14,10 +14,10 @@ library
                      , text
 
   exposed-modules:     PLEditor
-                     , PLEditor.Line
-                     , PLEditor.Lines
                      , PLEditor.CurrentLine
                      , PLEditor.Editor
+                     , PLEditor.Line
+                     , PLEditor.Lines
                      , PLEditor.View
 
   default-language:    Haskell2010
