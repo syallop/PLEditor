@@ -35,20 +35,27 @@ import qualified Data.Text as Text
 
 import PLEditor.Line
 
+-- | Vertical direction of text.
 data VDir
-  = TopToBottom
-  | BottomToTop
+  = TopToBottom -- ^ Text flows top to bottom.
+  | BottomToTop -- ^ Text flows bottom to top.
 
+-- | Vertical text can have its direction of flow reversed.
 type family ReverseV v where
   ReverseV TopToBottom = BottomToTop
   ReverseV BottomToTop = TopToBottom
 
+-- | Lines is a collection of Line's which has both:
+-- - A horizontal direction of flow which is the same for each line.
+-- - A vertical direction of flow.
 data Lines (vDir :: VDir) (hDir :: HDir) = Lines [Line hDir]
 
+-- | Lines can be appended when they have the same directions of flow.
 instance Monoid (Lines vDir hDir) where
   mempty = Lines []
   mappend (Lines lL) (Lines lR) = Lines (lL <> lR)
 
+-- | An empty set of lines.
 emptyLines
   :: Lines vDir hDir
 emptyLines = Lines []
