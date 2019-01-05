@@ -30,8 +30,9 @@ module PLEditor.Line
   )
   where
 
-import Data.Text
 import Data.Monoid
+import Data.Semigroup
+import Data.Text
 import qualified Data.Text as Text
 
 {- TODO:
@@ -51,9 +52,11 @@ type family ReverseH h where
 -- | A Line of Text.
 newtype Line (hDir :: HDir) = Line Text
 
+instance Semigroup (Line hDir) where
+ (Line l0) <> (Line l1) = Line (l0 <> l1)
+
 instance Monoid (Line hDir) where
   mempty = Line ""
-  mappend (Line l0) (Line l1) = Line (l0 <> l1)
 
 textLine
   :: Text

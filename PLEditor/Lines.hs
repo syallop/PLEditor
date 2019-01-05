@@ -31,6 +31,7 @@ module PLEditor.Lines
   where
 
 import Data.Monoid
+import Data.Semigroup
 import qualified Data.Text as Text
 
 import PLEditor.Line
@@ -51,9 +52,11 @@ type family ReverseV v where
 data Lines (vDir :: VDir) (hDir :: HDir) = Lines [Line hDir]
 
 -- | Lines can be appended when they have the same directions of flow.
+instance Semigroup (Lines vDir hDir) where
+  (Lines lL) <> (Lines lR) = Lines (lL <> lR)
+
 instance Monoid (Lines vDir hDir) where
   mempty = Lines []
-  mappend (Lines lL) (Lines lR) = Lines (lL <> lR)
 
 -- | An empty set of lines.
 emptyLines
