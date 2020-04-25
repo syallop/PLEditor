@@ -117,6 +117,7 @@ viewEditor (ViewPattern w h) (Editor priorLines currentLine afterLines) =
       cursorPosY = if remainingPriorHeight == 0 then 0 else remainingHeight
       cursorPos = (cursorPosX, lineCount remainingPriorLines)
    in (lines, cursorPos)
+viewEditor _ _ = error "Non-exhaustive pattern when viewing editor"
 
 -- | If it is possible to move left, do so. If not, silently don't.
 tryMoveLeft
