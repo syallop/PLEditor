@@ -1,6 +1,6 @@
-resolver: lts-13.1
+resolver: lts-15.11
 packages:
-- '.'
+- .
 extra-deps: []
 
 extra-package-dbs: []
