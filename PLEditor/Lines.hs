@@ -1,6 +1,7 @@
 {-# LANGUAGE
     DataKinds
   , TypeFamilies
+  , LambdaCase
   #-}
 {-|
 Module      : PLEditor.Lines
@@ -30,10 +31,6 @@ module PLEditor.Lines
   )
   where
 
-import Data.Monoid
-import Data.Semigroup
-import qualified Data.Text as Text
-
 import PLEditor.Line
 
 -- | Vertical direction of text.
@@ -43,8 +40,8 @@ data VDir
 
 -- | Vertical text can have its direction of flow reversed.
 type family ReverseV v where
-  ReverseV TopToBottom = BottomToTop
-  ReverseV BottomToTop = TopToBottom
+  ReverseV 'TopToBottom = 'BottomToTop
+  ReverseV 'BottomToTop = 'TopToBottom
 
 -- | Lines is a collection of Line's which has both:
 -- - A horizontal direction of flow which is the same for each line.
@@ -73,7 +70,7 @@ singletonLines l = Lines [l]
 firstLine
   :: Lines 'TopToBottom hDir
   -> Maybe (Line hDir, Lines 'TopToBottom hDir)
-firstLine lines = case lines of
+firstLine = \case
   Lines (l:ls)
     -> Just (l, Lines ls)
   _ -> Nothing
@@ -82,7 +79,7 @@ firstLine lines = case lines of
 lastLine
   :: Lines 'BottomToTop hDir
   -> Maybe (Line hDir, Lines 'BottomToTop hDir)
-lastLine lines = case lines of
+lastLine = \case
   Lines (l:ls)
     -> Just (l, Lines ls)
   _ -> Nothing
@@ -114,13 +111,15 @@ takeLines
   -> Lines vDir hDir
   -> (Lines vDir hDir,Int)
 takeLines n (Lines ls) =
-  let (linesTaken, remaining) = takeLines n ls
+  let (linesTaken, remaining) = takeLines' n ls
    in (Lines linesTaken, remaining)
   where
-    takeLines 0 _      = ([],0)
-    takeLines n []     = ([],n)
-    takeLines n (l:ls) = let (linesTaken, remaining) = takeLines (n-1) ls
-                          in (l:linesTaken, remaining)
+
+takeLines' :: Int -> [Line hDir] -> ([Line hDir], Int)
+takeLines' 0 _      = ([],0)
+takeLines' n []     = ([],n)
+takeLines' n (l:ls) = let (linesTaken, remaining) = takeLines' (n-1) ls
+                       in (l:linesTaken, remaining)
 
 -- | Map a function across each line.
 mapLines
@@ -130,7 +129,7 @@ mapLines
 mapLines lineF (Lines ls) = Lines . map lineF $ ls
 
 renderLines
-  :: Lines TopToBottom hDir
+  :: Lines 'TopToBottom hDir
   -> [Line hDir]
 renderLines (Lines ls) = ls
 

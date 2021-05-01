@@ -30,8 +30,6 @@ module PLEditor.Line
   )
   where
 
-import Data.Monoid
-import Data.Semigroup
 import Data.Text
 import qualified Data.Text as Text
 
@@ -46,8 +44,8 @@ data HDir
   | RightToLeft
 
 type family ReverseH h where
-  ReverseH LeftToRight = RightToLeft
-  ReverseH RightToLeft = LeftToRight
+  ReverseH 'LeftToRight = 'RightToLeft
+  ReverseH 'RightToLeft = 'LeftToRight
 
 -- | A Line of Text.
 newtype Line (hDir :: HDir) = Line Text

@@ -13,6 +13,7 @@ module PLEditor.View
   ( View ()
   , pattern ViewPattern
   , emptyView
+  , makeView
   , widerView
   , tallerView
 
@@ -73,6 +74,7 @@ data View = View
 
 -- | ViewPattern is a view pattern on view which exposes the width and height as
 -- integers. It has a confusing name.
+pattern ViewPattern :: Int -> Int -> View
 pattern ViewPattern w h = View (Width w) (Height h)
 
 -- | A View with no Width or Height.

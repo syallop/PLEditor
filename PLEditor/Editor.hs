@@ -50,7 +50,6 @@ module PLEditor.Editor
 -}
 
 import Control.Arrow
-import Data.Monoid
 
 import PLEditor.CurrentLine
 import PLEditor.Line
@@ -73,8 +72,9 @@ makeEditor ls =
   let (currentLine, afterLines) = case firstLine ls of
                                     Nothing
                                       -> (emptyCurrentLine  , emptyLines)
-                                    Just (l, ls)
-                                      -> (startCurrentLine l, ls)
+
+                                    Just (firstL, remainingLs)
+                                      -> (startCurrentLine firstL, remainingLs)
    in Editor
        { _priorLines  = emptyLines
        , _currentLine = currentLine
@@ -88,7 +88,7 @@ editorLines
   -> Lines 'TopToBottom 'LeftToRight
 editorLines editor = case editor of
   Editor priorLines currentLine afterLines
-    -> let (completedCurrentLine, cursorColumn) = completeCurrentLine currentLine
+    -> let (completedCurrentLine, _cursorColumn) = completeCurrentLine currentLine
         in reverseLines priorLines <> singletonLines completedCurrentLine <> afterLines
 
 -- | Convert an Editor to a collection of its lines top-to-bottom and
@@ -108,15 +108,14 @@ viewEditor (ViewPattern w h) (Editor priorLines currentLine afterLines) =
       (remainingAfterLines,remainingPriorHeight) = takeLines remainingAfterHeight afterLines
 
       -- Take as many lines remaining as possible from the prior lines.
-      (remainingPriorLines,remainingHeight) = takeLines remainingPriorHeight priorLines
-      lines = mconcat
+      (remainingPriorLines,_remainingHeight) = takeLines remainingPriorHeight priorLines
+      viewedLines = mconcat
         [ reverseLines $ mapLines (takeFromLine w) remainingPriorLines
         , singletonLines cursorLine
         , mapLines (takeFromLine w) remainingAfterLines
         ]
-      cursorPosY = if remainingPriorHeight == 0 then 0 else remainingHeight
       cursorPos = (cursorPosX, lineCount remainingPriorLines)
-   in (lines, cursorPos)
+   in (viewedLines, cursorPos)
 viewEditor _ _ = error "Non-exhaustive pattern when viewing editor"
 
 -- | If it is possible to move left, do so. If not, silently don't.
@@ -148,7 +147,7 @@ tryMoveDown editor = case editor of
            -> editor
 
          Just (nextLine, remainingAfters)
-           -> let (completedCurrentLine, cursorColumn) = completeCurrentLine currentLine
+           -> let (completedCurrentLine, _cursorColumn) = completeCurrentLine currentLine
                   newCurrentLine = startCurrentLine nextLine
                   newPriorLines = postpendLine completedCurrentLine priorLines
                in Editor newPriorLines newCurrentLine remainingAfters
@@ -166,7 +165,7 @@ tryMoveUp editor = case editor of
            -> editor
 
          Just (nextLine, remainingPriors)
-           -> let (completedCurrentLine, cursorColumn) = completeCurrentLine currentLine
+           -> let (completedCurrentLine, _cursorColumn) = completeCurrentLine currentLine
                   newCurrentLine = startCurrentLine nextLine
                   newAfterLines = prependLine completedCurrentLine afterLines
                in Editor remainingPriors newCurrentLine newAfterLines
@@ -198,7 +197,7 @@ newline
   -> Editor
 newline editor = case editor of
   Editor priorLines currentLine afterLines
-    -> let (completedCurrentLine, cursorColumn) = completeCurrentLine currentLine
+    -> let (completedCurrentLine, _cursorColumn) = completeCurrentLine currentLine
            newCurrentLine = emptyCurrentLine
            newPriorLines = postpendLine completedCurrentLine priorLines
         in Editor newPriorLines newCurrentLine afterLines

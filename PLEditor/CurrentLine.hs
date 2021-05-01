@@ -29,8 +29,6 @@ module PLEditor.CurrentLine
   )
   where
 
-import Data.Monoid
-
 import PLEditor.Line
 
 -- | A current line is a line with a cursor positon.
@@ -74,7 +72,7 @@ cursorCurrentLine currentLine =
            Nothing
              -> (emptyLine <> lineSuffix, lineLength linePrefix)
 
-           Just (c,remainingPrefix)
+           Just (_c,remainingPrefix)
              -> (reverseLine remainingPrefix <> textLine "_" <> lineSuffix, lineLength linePrefix)
 
 -- | Move a cursor left if possible.
